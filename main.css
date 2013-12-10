@@ -1,0 +1,240 @@
+/* #id, .class (같은 스타일) */
+/* #id element (하위 요소) */
+/* #id > element (바로 아래) */
+/* #id > p:nth-child(2) (몇 번째 아래) */
+
+body {
+	background-color: #F2F2F2;
+	text-decoration: none;
+	font-family: Tahoma,Helvetica,Sans-Serif;
+}
+
+header {
+	1display: block;
+	width: 100%;
+	height: 70px;
+	margin: 0 auto;
+}
+
+#container {
+	position: relative;
+	height: 100%;
+	width: 1180px;
+	margin-top: 0px;
+	margin-right: auto;
+	margin-bottom: 0px;
+	margin-left: auto;
+}
+
+#site_info {
+	display: inline-block;
+	height: 20px;
+	width: 180px;
+	1color: transparent;
+	padding-top: 20px;
+	1border: 1px solid skyblue;
+}
+
+#site_info > div {
+	color: #808080;
+	font-weight: lighter;
+	font-size: 12px;
+	text-decoration: none;
+	float: bottom;
+	margin-bottom: 2px;
+}
+
+#category_quick_link {
+	position: absolute;
+	width: 560px;
+	height: 15px;
+	bottom: 5px;
+	left: 3px;
+	text-align: left;
+}
+
+#news_category > ul > li > a {
+	color: #999999;
+	margin-top: 2px;
+	float: left;
+	font-size: 12px;
+	text-decoration: none;
+	margin-right: 23px;
+}
+
+#sign_in {
+	position: absolute;
+	width: 560px;
+	height: 15px;
+	top: 5px;
+	right: 1px;
+	padding-top: 4px;
+	text-align: right;
+}
+
+#sign_in > div > a {
+	color: #808080;
+	float: right;
+	font-size: 12px;
+	text-decoration: none;
+	margin-left: 23px;
+}
+
+#sign_in > div:nth-child(3) > a {
+	color: #1C71B9;
+}
+
+#search_box {
+	position: absolute;
+	1float: right;
+	top: 26px;
+	right: 0px;
+	width: 150px;
+	height: 17px;
+	border: 1px solid #958e8a;
+	border-radius: 2px;
+}
+
+#search_box > a {
+	float: right;
+	margin: 1px 2px;
+}
+
+#join_us {
+	position: absolute;
+	width: 560px;
+	height: 15px;
+	bottom: 5px;
+	right: 0;
+	text-align: right;
+}
+
+#join_us > nav > ul > li > a {
+	float: right;
+	margin-left: 3px;
+	1border: 1px solid skyblue;
+}
+
+#join_us > div {
+	color: #808080;
+	font-weight: lighter;
+	font-size: 12px;
+	text-decoration: none;
+	float: right;
+	margin-top: 2px;
+	margin-right: 7px;
+}
+
+#main_contents {
+	background-color: #FFFFFF;
+	1display: block;
+	width: 100%;
+	height: 630px;
+	margin: 0 auto;
+}
+
+#tag_cloud {
+	display: block;
+	margin: 0 auto;
+	height: 580px;
+	width: 100%;
+	position: relative;
+	overflow: hidden;
+	margin: 0;
+	
+	1border: 1px solid skyblue;
+}
+
+#tags {
+	position: absolute;
+	height: 100%;
+	width: 500%;
+	top: 0px;
+	left: 0px;
+	overflow: hidden;
+}
+
+#tags > li {
+	float: left;
+	height: 100%;
+	width: 20%;
+	overflow: hidden;
+}
+
+#tags > li > div > img {
+	display: block;
+	margin: auto;
+}
+
+1#tags > li > div > canvas {
+	1이걸로는 안 되네..
+	1height: 580px;
+	1width: 1180px;
+1}
+
+#control_menu {
+	background-color: #FFFFFF;
+	position: absolute;
+	bottom: 2px;
+	right: 3px;
+	width: 500px;
+	height: 30px;
+}
+
+#control_menu > ul > li {
+	float: right;
+	margin-left: 12px;
+}
+
+#selet_newspaper {
+	background-color: #FFFFFF;
+	1display: block;
+	width: 100%;
+	height: 75px;
+	margin: 5 auto;
+}
+
+#newspapers > li > div {
+	color: #808080;
+	font-weight: lighter;
+	text-decoration: none;
+	font-size: 12px;
+	float: left;
+	width: 104px;
+	height: 65px;
+	border: 1px solid #958e8a;
+	border-radius: 2px;
+	margin: 2px 3px;
+	padding: 3px;
+}
+
+footer {
+	1display: block;
+	width: 100%;
+	height: 40px;
+	margin: 5 auto;
+}
+
+footer > div > div {
+	color: #808080;
+	font-weight: lighter;
+	font-size: 12px;
+	float: right;
+	margin: 10px 3px;
+	padding: 3px;
+}
+
+.tag {
+	display: block;
+	float;
+	clear;
+	
+	height: 5px;
+	width: 5px;
+	margin-top: auto;
+	margin-right: auto;
+	margin-bottom: auto;
+	margin-left: auto;
+
+	overflow: visible;
+}

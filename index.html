@@ -192,91 +192,184 @@
 	    	jade 		: 78, 183, 153
 	    */
 	    	    
-	    //태그 클라우드에 표시될 단어들의 내용과 빈도수를 담아두는 변수
-	    var tagWords = null;
+	    //일단 상수로 담아두자 - 나중에 동적으로 받아올 것
+	    var canvasWidth = 1180;
+	    var canvasHeight = 580;
 	    
-	    //단어들의 변경된 정보를 5분마다 서버에서 새로 받아와서 tagWords의 내용을 업데이트한다.
+	    //조심해!
+	    //나중에 업데이트된 키워드 중에서 이미 리스트에 있다면 그 자리에 업데이트 된 빈도수를 바꿔줘야 계속 같은 위치 유지
+	    //그러니까 딕셔너리 타입으로 가야 될 수도 있겠네...
+	    //태그 클라우드에 표시될 단어들의 내용과 빈도수를 담아두는 변수
+	    var tagWords = [];
+	    
+	    function createTag(idx, keyword, frequency, tagList){
+	    	var obj = new Object();
+	    	obj.idx = idx;
+	    	obj.keyword = keyword;
+	    	obj.frequency = frequency;
+	    	obj.diameter = keyword.length * 14; //빈도에 따라서 한 글자의 크기가 달라지므로 나중에 frequency와 상수 곱해줄 것
+	    	//가운데 몰려서 생성되게 설정
+	    	obj.xPos = Math.floor(Math.random() * canvasWidth / 2) + canvasWidth / 4;
+	    	obj.yPos = Math.floor(Math.random() * canvasHeight / 2) + canvasHeight / 4;
+	    	
+	    	//아래 움직임에 관련된 상수들 나중에 따로 변수에 담아둘 것
+	    	obj.xVelocity = Math.floor(Math.random() * 1);
+	    	obj.yVelocity = Math.floor(Math.random() * 1);
+	    	obj.xAcceleration = Math.floor(Math.random() * 1);
+	    	obj.yAcceleration = Math.floor(Math.random() * 1);
+
+	    	obj.color = "rgb(7, 104, 172)"; //일단 하드 코딩 : 나중에 테이블 만들어 두고 랜덤하게 또는 빈도에 따라서 색 지정할 것
+	    	obj.otherTags = tagList;
+	    	
+	    	// 태그들이 매 프레임마다 하는 일은
+	    	// 일단 다른 태그들과 겹치는지 체크해서 겹치면 서로 반대방향으로 속도 증가 시킴(거리에 비례해서)
+	    	// 그 다음은 지금 설정된 속도대로 움직임 - 좌표 변경
+	    	// 이 작업의 반복
+	    	obj.collide = function(){
+	    		//console.log("collide start");
+	    	
+		    	for (var i = 0; i < this.idx; ++i){
+			    	//check the collision with each tags
+			    	var dx = this.otherTags[i].xPos - this.xPos;
+			    	var dy = this.otherTags[i].yPos - this.yPos;
+			    	var distance = Math.sqrt( (dx * dx) + (dy * dy) );
+			    	
+			    	var weight = this.diameter + this.otherTags[i].diameter - distance;
+			    	
+			    	if (weight > 0){
+			    		//값이 너무 크면 dx, dy를 0 ~ 1 사이의 값으로 변경할 것
+			    		xWeight = weight * dx * 0.01;
+			    		yWeight = weight * dy * 0.01;
+			    		
+			    		this.xVelocity -= xWeight;
+			    		this.yVelocity -= yWeight;
+			    		
+			    		this.otherTags[i].xVelocity += xWeight;
+			    		this.otherTags[i].yVelocity += yWeight;
+			    	}
+		    	}
+		    	
+		    	//console.log("collide end");
+	    	}
+	    	
+	    	obj.move = function(){
+	    		//console.log("move start");
+	    		
+	    		//마찰력을 넣으면 여기서 가속도와 속도 모두 변경해야 하려나?
+	    		//현재 속도의 반대 방향으로 가속도를 주자!
+	    		
+	    		//속도 업데이트
+	    		this.xVelocity += this.xAcceleration;
+	    		this.yVelocity += this.yAcceleration;
+	    		
+	    		//위치 이동
+	    		this.xPos += this.xVelocity;
+	    		this.yPos += this.yVelocity;
+	    		
+	    		//화면 밖으로 나가는 경우 반대 방향으로 튕겨준다.
+	    		if (xPos < 0 + this.diameter / 2){
+	    			xPos = this.diameter;
+	    			xVeolocity *= -1;
+	    		} else if (xPos > canvasWidth - this.diameter / 2){
+	    			xPos = canvasWidth - this.diameter;
+	    			xVelocity *= -1;
+	    		}
+	    		
+	    		if (yPos < 0 + this.diameter / 2){
+	    			yPos = this.diameter;
+	    			yVelocity *= -1;
+	    		} else if (yPos > canvasHeight - this.diameter / 2){
+	    			yPos = canvasHeight - this.diameter;
+	    			yVelocity *= -1;
+	    		}
+	    		
+	    		//console.log("move end");
+	    	}
+	    	
+	    	return obj;
+	    }
+	    
+	    //단어들의 변경된 정보를 5분마다 서버에서 새로 받아와서 receivedTagWords의 내용을 업데이트한다.
 	    var refreshTime = 5 * 60 * 1000; //5min
-	    	    
 	    var tagSrcURL = "sampleTags.json";
 	    
-	    refreshTags = function(){
+	    var refreshTags = function(){
+	    	console.log("refresh");
+	    	
+	    	var receivedTagWords = null;
 		    var tagRequest = new XMLHttpRequest();
 		    tagRequest.open("GET", tagSrcURL, false);
 	    	tagRequest.send(null);
 	    	
 	    	//서버에서 업데이트 된 태그 정보를 받아 온 후에 데이터를 교환해야 하므로 동기적으로 작동되어야 한다.
-		    tagWords = JSON.parse(tagRequest.responseText);
-		    console.log(tagWords);
+		    receivedTagWords = JSON.parse(tagRequest.responseText);
+		    console.log(receivedTagWords);
+		    
+		    for (var i = 0, count = receivedTagWords.length; i < count; ++i){
+		    	//최초 생성이 아니라 이미 생성된 리스트를 업데이트하는 경우에는 할당된 태그 오브젝트를 삭제
+		    	if (tagWords[i] != undefined){
+		    		delete tagWords[i];
+		    	}
+		    	
+		    	//새로 받아온 데이터를 기반으로 태그 오브젝트 생성
+				tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], tagWords);
+		    }
 		    
 		    //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
 		    //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
 		    setTimeout(refreshTags, refreshTime) //5분마다 태그 데이터 업데이트
 	    }
 	    
-	    //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트(어색하다)
-	    refreshTags();
-	    console.log(tagWords);
+	    //인자를 받아서 그리면 재귀가 안 끝난다. 오버헤드가 낮은 방법으로 함수 안에서 context에 접근할 수 있도록 할 것
+	    var drawTags = function(){
+		    console.log("draw");
+		    
+			//조심해! - 하드코딩
+			//context = 
+			context.clearRect ( 0, 0, 1180, 580);
+			
+			for (var i = 0, count = tagWords.length; i < count; ++i){
+				context.font = "18px Tahoma"; //나중에 obj에서 정보 가져와서 넣을 것
+				context.texAlign = "center";
+				context.textBaseLine = "middle";
+				
+				context.fillStyle = tagWords[i].color;
+				
+				tagWords[i].collide();
+				tagWords[i].move();
+				
+				context.fillText(tagWords[i].keyword, tagWords[i].xPos, tagWords[i].yPos);
+			}
+			
+			console.log("for out!");
+			
+			setTimeout(drawTags, 20);
+			
+			console.log("draw end");
+	    }
 	    
-	    /*
-	    var tempTest = [
-	    					['Processing', 1000, 200],
-							['Hello World!', 500, 500]
-						];
-	    
-	    var jsonTest = JSON.stringify(tempTest);
-	    console.log(jsonTest);
-	    
-	    var testCopy = JSON.parse(jsonTest);
-	    console.log(testCopy);
-	    console.log(testCopy[0]);
-	    */
-	    
+	    // canavas 설정
 	    var drawing = document.getElementById("canvas_test");
 	    
 	    var xPos;
 	    var yPos;
 	    
-	    //태그들이 움직일 때 방향을 정하는 기준점
-	    targetMove = function(){
-	    	//테스트용 하드코딩 상수 변경할 것
-		    xPos = Math.floor(Math.random() * 1180); 
-		    yPos = Math.floor(Math.random() * 580); 
-	    }
+	    if (drawing.getContext){
+	    	//테스트를 위해 전역으로 변경
+	    	context = drawing.getContext("2d");
 	    
-	    
-	    tagMove = function(){
-			if (drawing.getContext){
-				//console.log(tagWords);
-				console.log(tagWords[0][1]);
-				//이동할 목표 지점의 좌표에 기반해서 현재 위치에서 이동
-				tagWords[0][1] += ( (xPos - tagWords[0][1]) * 0.005);
-				tagWords[0][2] += ( (yPos - tagWords[0][2]) * 0.005);
-				
-				tagWords[1][1] += ( (xPos - tagWords[1][1]) * 0.01);
-				tagWords[1][2] += ( (yPos - tagWords[1][2]) * 0.01);
-				
-				var context = drawing.getContext("2d");
-				
-				//조심해! - 하드코딩
-				context.clearRect ( 0, 0, 1180, 580);
-				
-				context.font = "18px Tahoma";
-				context.texAlign = "center";
-				context.textBaseLine = "middle";
-				
-				context.fillStyle = "rgb(7, 104, 172)";
-				context.fillText(tagWords[0][0], tagWords[0][1], tagWords[0][2]);
-				
-				context.fillStyle = "rgb(30, 153, 197)";
-				context.fillText(tagWords[1][0], tagWords[1][1], tagWords[1][2]);
-			}
-	    }
+	    	//태그 정보를 업데이트하고
+	    	refreshTags();
+	    	
+			//주기적으로 현재의 tag data를 기반으로 화면에 그린다.
+			//var drawTagsID = setInterval(drawTags(context), 20);
+			drawTags();
+			//drawTagsID = setInterval(drawTags, 200)
 			
-	    //주기적으로 목표지점을 바꿔주고 태그를 그 목표에 맞춰서 이동시키고 새로 그린다.
-	    var tartgetMoveID = setInterval(targetMove, 200);
-	    var tagMoveID = setInterval(tagMove, 200);
-	    
+	    }
+	    //var drawTagsID = setInterval(drawTags(context), 200);
+			
+	   
 	    /*
 		    각 신문사에게 임의의 가중치를 부여하고 가중치가 높은 신문사 10개를 추출해서 웹페이지 하단에 노출
 	    */
@@ -333,6 +426,10 @@
 		    'AUTO' : 2
 	    }
 	    
+	    
+	    //조심해!
+	    //태그 이름도 변수로 뺄까?
+	    
 	    //스크롤되는 태그 페이지 수(태그 클라우드가 생성된 신문사의 수)
 	    var tagPageNumber = document.querySelectorAll("#tag_cloud > ul > li").length;
 	    
@@ -349,7 +446,7 @@
 	    
 	    //이동되는 방향에 따른 이벤트 콜백 함수 생성
 	    //조심해! - 나중에 자동 스크롤 기능 추가할 것
-		scroll = function(e, direction){
+		var scroll = function(e, direction){
 			//console.log("scroll()");
 			
 			//현재 애니메이션이 진행 중이라면 이번 입력은 처리하지 않는다.
@@ -385,7 +482,7 @@
 		    //console.log(startPosition);
 	
 			//애니메이션 재생 시작으로부터 현재까지의 시간 값을 인자로 받아서 타겟을 적절한 위치로 이동 시킴
-			move = function(frame){
+			var move = function(frame){
 				//console.log("move()");
 				
 				var leftValue = startPosition + (animationDirection * TagCloudWidth * Math.sin( (Math.PI / 2) * (frame / scrollTime) ) );
@@ -397,7 +494,7 @@
 			
 		    //주기적으로 불리어져서 현재 타겟이 위치할 위치값(전체 이동해야 할 거리에 대한 비율)을 계산해서 이동시키는 함수 호출
 		    //목표지점에 도달하면 setInterval 종료
-		    scrollAnimation = function(){
+		    var scrollAnimation = function(){
 		    	//console.log("scrollAnimation()");
 			
 			    animationKeyFrame += animationInterval;
@@ -417,7 +514,7 @@
 		}
 		
 		//이벤트가 발생한 타겟에 적절한 이벤트를 연결    
-		linkEvent = function(e){
+		var linkEvent = function(e){
 			var target = e.target.parentNode;
 			
 			if (target.id === "next_page")

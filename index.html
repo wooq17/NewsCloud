@@ -196,30 +196,38 @@
 	    var canvasWidth = 1180;
 	    var canvasHeight = 580;
 	    
+	    var minTextSize = 14;
+	    
 	    //조심해!
 	    //나중에 업데이트된 키워드 중에서 이미 리스트에 있다면 그 자리에 업데이트 된 빈도수를 바꿔줘야 계속 같은 위치 유지
 	    //그러니까 딕셔너리 타입으로 가야 될 수도 있겠네...
 	    //태그 클라우드에 표시될 단어들의 내용과 빈도수를 담아두는 변수
+	    //json data는 빈도순으로 정렬되어 있는 상태(가장 많이 나오는 키워드가 나중에 나오게)
 	    var tagWords = [];
 	    
-	    function createTag(idx, keyword, frequency, tagList){
+	    function createTag(idx, keyword, frequency, maxFrequency, tagList){
+	    	console.log(idx);
+	    
 	    	var obj = new Object();
 	    	obj.idx = idx;
 	    	obj.keyword = keyword;
 	    	obj.frequency = frequency;
-	    	obj.diameter = keyword.length * 14; //빈도에 따라서 한 글자의 크기가 달라지므로 나중에 frequency와 상수 곱해줄 것
+	    	obj.otherTags = tagList;
+	    	obj.textSize = minTextSize + (frequency * minTextSize * 3 / maxFrequency);
+	    	obj.radius = obj.textSize * keyword.length / 3;
+	    	
 	    	//가운데 몰려서 생성되게 설정
-	    	obj.xPos = Math.floor(Math.random() * canvasWidth / 2) + canvasWidth / 4;
-	    	obj.yPos = Math.floor(Math.random() * canvasHeight / 2) + canvasHeight / 4;
+	    	obj.xPos = (canvasWidth / 2) + ( (Math.random() > 0.5) ? 1 : -1) * Math.floor(Math.random() * (maxFrequency - frequency) * 5);
+	    	obj.yPos = (canvasHeight / 2) + ( (Math.random() > 0.5) ? 1 : -1) * Math.floor(Math.random() * (maxFrequency - frequency) * 2);
 	    	
 	    	//아래 움직임에 관련된 상수들 나중에 따로 변수에 담아둘 것
-	    	obj.xVelocity = Math.floor(Math.random() * 1);
-	    	obj.yVelocity = Math.floor(Math.random() * 1);
-	    	obj.xAcceleration = Math.floor(Math.random() * 1);
-	    	obj.yAcceleration = Math.floor(Math.random() * 1);
+	    	obj.xVelocity = 0 //Math.floor(Math.random() * 1);
+	    	obj.yVelocity = 0 //Math.floor(Math.random() * 1);
+	    	obj.xAcceleration = 0 //Math.floor(Math.random() * 1);
+	    	obj.yAcceleration = 0 //Math.floor(Math.random() * 1);
 
 	    	obj.color = "rgb(7, 104, 172)"; //일단 하드 코딩 : 나중에 테이블 만들어 두고 랜덤하게 또는 빈도에 따라서 색 지정할 것
-	    	obj.otherTags = tagList;
+	    	
 	    	
 	    	// 태그들이 매 프레임마다 하는 일은
 	    	// 일단 다른 태그들과 겹치는지 체크해서 겹치면 서로 반대방향으로 속도 증가 시킴(거리에 비례해서)
@@ -234,18 +242,22 @@
 			    	var dy = this.otherTags[i].yPos - this.yPos;
 			    	var distance = Math.sqrt( (dx * dx) + (dy * dy) );
 			    	
-			    	var weight = this.diameter + this.otherTags[i].diameter - distance;
+			    	var radiusSum = this.radius + this.otherTags[i].radius;
 			    	
-			    	if (weight > 0){
+			    	var weight = (radiusSum - distance) / radiusSum;
+			    	
+			    	if (weight > 0.05){ //너무 작은 이동 - 미세한 떨림 보정을 위해 0.05과 비교
 			    		//값이 너무 크면 dx, dy를 0 ~ 1 사이의 값으로 변경할 것
 			    		xWeight = weight * dx * 0.01;
 			    		yWeight = weight * dy * 0.01;
 			    		
-			    		this.xVelocity -= xWeight;
-			    		this.yVelocity -= yWeight;
+			    		//var textSizeSum = otherTags[i].textSize + this.textSize;
 			    		
-			    		this.otherTags[i].xVelocity += xWeight;
-			    		this.otherTags[i].yVelocity += yWeight;
+			    		this.xPos -= xWeight; // * (this.textSize / textSizeSum);
+			    		this.yPos -= yWeight; // * (this.textSize / textSizeSum);
+			    		
+			    		this.otherTags[i].xPos += xWeight * 0.1; // * (otherTags[i].textSize / textSizeSum);
+			    		this.otherTags[i].yPos += yWeight * 0.1; // * (otherTags[i].textSize / textSizeSum);
 			    	}
 		    	}
 		    	
@@ -259,28 +271,28 @@
 	    		//현재 속도의 반대 방향으로 가속도를 주자!
 	    		
 	    		//속도 업데이트
-	    		this.xVelocity += this.xAcceleration;
-	    		this.yVelocity += this.yAcceleration;
+	    		//this.xVelocity += this.xAcceleration;
+	    		//this.yVelocity += this.yAcceleration;
 	    		
 	    		//위치 이동
-	    		this.xPos += this.xVelocity;
-	    		this.yPos += this.yVelocity;
+	    		//this.xPos += this.xVelocity;
+	    		//this.yPos += this.yVelocity;
 	    		
 	    		//화면 밖으로 나가는 경우 반대 방향으로 튕겨준다.
-	    		if (xPos < 0 + this.diameter / 2){
-	    			xPos = this.diameter;
-	    			xVeolocity *= -1;
-	    		} else if (xPos > canvasWidth - this.diameter / 2){
-	    			xPos = canvasWidth - this.diameter;
-	    			xVelocity *= -1;
+	    		if (this.xPos < (this.radius / 1) ){
+	    			this.xPos = this.radius / 1;
+	    			//xVeolocity *= -1;
+	    		} else if (this.xPos > (canvasWidth - (this.radius / 1) ) ){
+	    			this.xPos = canvasWidth - (this.radius / 1);
+	    			//xVelocity *= -1;
 	    		}
 	    		
-	    		if (yPos < 0 + this.diameter / 2){
-	    			yPos = this.diameter;
-	    			yVelocity *= -1;
-	    		} else if (yPos > canvasHeight - this.diameter / 2){
-	    			yPos = canvasHeight - this.diameter;
-	    			yVelocity *= -1;
+	    		if (this.yPos < (this.radius / 2) ){
+	    			this.yPos = this.radius / 2;
+	    			//yVelocity *= -1;
+	    		} else if (this.yPos > (canvasHeight - this.radius / 2) ){
+	    			this.yPos = canvasHeight - (this.radius / 2);
+	    			//yVelocity *= -1;
 	    		}
 	    		
 	    		//console.log("move end");
@@ -312,7 +324,7 @@
 		    	}
 		    	
 		    	//새로 받아온 데이터를 기반으로 태그 오브젝트 생성
-				tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], tagWords);
+				tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], receivedTagWords[0][1], tagWords);
 		    }
 		    
 		    //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
@@ -322,15 +334,15 @@
 	    
 	    //인자를 받아서 그리면 재귀가 안 끝난다. 오버헤드가 낮은 방법으로 함수 안에서 context에 접근할 수 있도록 할 것
 	    var drawTags = function(){
-		    console.log("draw");
+		    //console.log("draw");
 		    
 			//조심해! - 하드코딩
 			//context = 
 			context.clearRect ( 0, 0, 1180, 580);
 			
 			for (var i = 0, count = tagWords.length; i < count; ++i){
-				context.font = "18px Tahoma"; //나중에 obj에서 정보 가져와서 넣을 것
-				context.texAlign = "center";
+				context.font = tagWords[i].textSize + "px Tahoma"; //"18px Tahoma"; //나중에 obj에서 정보 가져와서 넣을 것
+				context.textAlign = "center";
 				context.textBaseLine = "middle";
 				
 				context.fillStyle = tagWords[i].color;
@@ -340,12 +352,10 @@
 				
 				context.fillText(tagWords[i].keyword, tagWords[i].xPos, tagWords[i].yPos);
 			}
+						
+			setTimeout(drawTags, 10);
 			
-			console.log("for out!");
-			
-			setTimeout(drawTags, 20);
-			
-			console.log("draw end");
+			//console.log("draw end");
 	    }
 	    
 	    // canavas 설정

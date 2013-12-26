@@ -202,13 +202,13 @@ var minTextSize = 14;
 
 //단어들의 변경된 정보를 5분마다 서버에서 새로 받아와서 receivedTagWords의 내용을 업데이트한다.
 var refreshTime = 5 * 60 * 1000; //5min
-var moveFrameInterval = 10;
+var moveFrameInterval = 20;
 
 var canvasList = [];
 var currentCanvas = null;
 
 var canvasInit = function(){
-	for (var idx = 0, count = 2; idx < count; ++idx){
+	for (var idx = 0, count = tagPageNumber; idx < count; ++idx){
 		var path = "sampleTags" + idx + ".json";
 		
 	    canvasList[idx] = createCanvas(idx, path, canvasList);
@@ -264,8 +264,8 @@ var createTag = function(idx, keyword, frequency, maxFrequency, tagList){
 	    	
 	    	if (weight > 0.05){ //너무 작은 이동 - 미세한 떨림 보정을 위해 0.05과 비교
 	    		//값이 너무 크면 dx, dy를 0 ~ 1 사이의 값으로 변경할 것
-	    		xWeight = weight * dx * 0.01;
-	    		yWeight = weight * dy * 0.01;
+	    		xWeight = weight * dx * 0.03;
+	    		yWeight = weight * dy * 0.03;
 	    		
 	    		//var textSizeSum = otherTags[i].textSize + this.textSize;
 	    		
@@ -348,36 +348,11 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
     oCanvas.drawingStart = function(){
     	console.log(this.drawContext);
     	//태그 정보를 업데이트하고
-    	this.refreshTags();
+    	refreshTags();
     	
 		//주기적으로 현재의 tag data를 기반으로 화면에 그린다.
 		this.drawTimerId = setInterval(drawTags, moveFrameInterval);
 	}
-	
-	oCanvas.refreshTags = function(){
-    	//console.log(this.tagSrcURL);
-    	var receivedTagWords = null;
-	    var tagRequest = new XMLHttpRequest();
-	    tagRequest.open("GET", this.tagSrcURL, false);
-    	tagRequest.send(null);
-    	
-    	//서버에서 업데이트 된 태그 정보를 받아 온 후에 데이터를 교환해야 하므로 동기적으로 작동되어야 한다.
-	    receivedTagWords = JSON.parse(tagRequest.responseText);
-	    
-	    for (var i = 0, count = receivedTagWords.length; i < count; ++i){
-	    	//최초 생성이 아니라 이미 생성된 리스트를 업데이트하는 경우에는 할당된 태그 오브젝트를 삭제
-	    	if (this.tagWords[i] != undefined){
-	    		delete this.tagWords[i];
-	    	}
-	    	
-	    	//새로 받아온 데이터를 기반으로 태그 오브젝트 생성
-			this.tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], receivedTagWords[0][1], this.tagWords);
-	    }
-	    console.log(this.tagWords);
-	    //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
-	    //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
-	    setTimeout(this.refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
-    }
 	
 	/*
 	oCanvas.drawTags = function(context){
@@ -414,6 +389,30 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
 	return oCanvas;
 }
 
+var refreshTags = function(){
+	//console.log(this.tagSrcURL);
+	var receivedTagWords = null;
+    var tagRequest = new XMLHttpRequest();
+    tagRequest.open("GET", currentCanvas.tagSrcURL, false);
+	tagRequest.send(null);
+	
+	//서버에서 업데이트 된 태그 정보를 받아 온 후에 데이터를 교환해야 하므로 동기적으로 작동되어야 한다.
+    receivedTagWords = JSON.parse(tagRequest.responseText);
+    
+    for (var i = 0, count = receivedTagWords.length; i < count; ++i){
+    	//최초 생성이 아니라 이미 생성된 리스트를 업데이트하는 경우에는 할당된 태그 오브젝트를 삭제
+    	if (currentCanvas.tagWords[i] != undefined){
+    		delete currentCanvas.tagWords[i];
+    	}
+    	
+    	//새로 받아온 데이터를 기반으로 태그 오브젝트 생성
+		currentCanvas.tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], receivedTagWords[0][1], currentCanvas.tagWords);
+    }
+    console.log(currentCanvas.tagWords);
+    //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
+    //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
+    setTimeout(refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
+}
 
 var drawTags = function(){
 	currentCanvas.drawContext.clearRect ( 0, 0, 1180, 580);

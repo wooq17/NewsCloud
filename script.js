@@ -466,12 +466,33 @@ tempElement.addEventListener('mouseout', closePopup, false);
 
 function openPopup(){
 	//fill this area
-	console.log("open");
+	var detailArea = document.getElementById("tagDetail");
+    var detailContent = "";
+    
+    //contents
+    detailContent += "<div></div>";
+    
+    detailArea.innerHTML = detailContent;
+    
+    var detailBox = document.querySelector("#tagDetail > div");
+    
+    var yPos = window.event.pageY;
+    if (yPos > 200){
+	    yPos = 200;
+    }
+    
+    detailBox.style.left = window.event.pageX + "px";
+    detailBox.style.top = yPos + "px";
 }
 
 function closePopup(){
 	//fill this area
-	console.log("close");
+	setTimeout(function(){
+		var detailArea = document.getElementById("tagDetail");
+		var detailContent = "";
+		
+		detailArea.innerHTML = detailContent;
+	}, 300);
 }
 
 /*

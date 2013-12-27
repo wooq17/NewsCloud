@@ -171,12 +171,12 @@ var newspaperRandomIndex = function(){
 	
 	newsPaperList.sort(compare);
 	
-	newsPaperArray = [];
-	newsPaperArray = document.querySelectorAll("#newspapers > li");
+	var newsPaperArray = [];
+	var newsPaperArray = document.querySelectorAll("#newspapers > li");
 	
 	//console.log(newsPaperArray);
 	
-	htmlLength = newsPaperArray.length;
+	var htmlLength = newsPaperArray.length;
 	
 	for(var i = 0; i < htmlLength; ++i){
 		newsPaperArray[i].insertAdjacentHTML(
@@ -205,6 +205,7 @@ var refreshTime = 5 * 60 * 1000; //5min
 var moveFrameInterval = 20;
 
 var canvasList = [];
+var buttonList = [];
 var currentCanvas = null;
 
 var canvasInit = function(){
@@ -281,7 +282,7 @@ var createTag = function(idx, keyword, frequency, maxFrequency, tagList){
 	}
 	
 	obj.move = function(){
-		console.log("move start");
+		//console.log("move start");
 		
 		//마찰력을 넣으면 여기서 가속도와 속도 모두 변경해야 하려나?
 		//현재 속도의 반대 방향으로 가속도를 주자!
@@ -399,6 +400,9 @@ var refreshTags = function(){
 	//서버에서 업데이트 된 태그 정보를 받아 온 후에 데이터를 교환해야 하므로 동기적으로 작동되어야 한다.
     receivedTagWords = JSON.parse(tagRequest.responseText);
     
+    var tagButton = document.getElementById("tagButton");
+    var newButtons = "";
+    
     for (var i = 0, count = receivedTagWords.length; i < count; ++i){
     	//최초 생성이 아니라 이미 생성된 리스트를 업데이트하는 경우에는 할당된 태그 오브젝트를 삭제
     	if (currentCanvas.tagWords[i] != undefined){
@@ -407,7 +411,26 @@ var refreshTags = function(){
     	
     	//새로 받아온 데이터를 기반으로 태그 오브젝트 생성
 		currentCanvas.tagWords[i] = createTag(i, receivedTagWords[i][0], receivedTagWords[i][1], receivedTagWords[0][1], currentCanvas.tagWords);
+		
+		newButtons += "<div></div>";
     }
+    
+    tagButton.innerHTML = newButtons;
+	buttonList = document.querySelectorAll("#tagButton > div");
+	
+	for (var i = 0, count = receivedTagWords.length; i < count; ++i){
+		if (typeof buttonList[i] != 'undefined'){
+			//기존 등록 이벤트 삭제
+			buttonList[i].removeEventListener('mouseover', openPopup, false);
+			buttonList[i].removeEventListener('mouseout', closePopup, false);
+		}
+		buttonList[i].style.width = (currentCanvas.tagWords[i].radius * 2) + "px";
+		buttonList[i].style.height = currentCanvas.tagWords[i].textSize + "px";
+		
+		buttonList[i].addEventListener('mouseover', openPopup, false);
+		buttonList[i].addEventListener('mouseout', closePopup, false);
+	}
+    
     console.log(currentCanvas.tagWords);
     //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
     //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
@@ -428,10 +451,29 @@ var drawTags = function(){
 		currentCanvas.tagWords[i].move();
 		
 		currentCanvas.drawContext.fillText(currentCanvas.tagWords[i].keyword, currentCanvas.tagWords[i].xPos, currentCanvas.tagWords[i].yPos);
+		
+		buttonList[i].style.left = (currentCanvas.tagWords[i].xPos - currentCanvas.tagWords[i].radius) + "px";
+		buttonList[i].style.top = (currentCanvas.tagWords[i].yPos - currentCanvas.tagWords[i].textSize) + "px";
 	}
 				
 	//setTimeout(drawTags, moveFrameInterval);
 }
+
+var tempElement = document.getElementById("search_box");
+
+tempElement.addEventListener('mouseover', openPopup, false);
+tempElement.addEventListener('mouseout', closePopup, false);
+
+function openPopup(){
+	//fill this area
+	console.log("open");
+}
+
+function closePopup(){
+	//fill this area
+	console.log("close");
+}
+
 /*
 	color table
 	light blue 	: 30, 153, 197

@@ -238,3 +238,24 @@ footer > div > div {
 
 	overflow: visible;
 }
+
+#tagButton > div {
+	position: absolute;
+	
+	1height: 20px;
+	1width: 20px;
+	
+	border: 1px solid skyblue;
+}
+
+#tagButton {
+	height: 100%;
+	width: 100%;
+}
+
+#tagDetail {
+	position: fixed;
+	
+	width: 100px;
+	height: 400px;
+}

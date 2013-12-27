@@ -333,6 +333,7 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
     oCanvas.otherCanvases = canvasList;
     oCanvas.drawing = null;
     oCanvas.drawContext = null;
+    oCanvas.refreshTimerId = null;
     oCanvas.drawTimerId = null;
     	
     //자신의 대상 캔버스를 찾아서 등록
@@ -349,6 +350,7 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
     	console.log(this.drawContext);
     	//태그 정보를 업데이트하고
     	refreshTags();
+    	this.refreshTimerId = setInterval(refreshTags, refreshTime);
     	
 		//주기적으로 현재의 tag data를 기반으로 화면에 그린다.
 		this.drawTimerId = setInterval(drawTags, moveFrameInterval);
@@ -376,6 +378,7 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
 	*/
 	oCanvas.change = function(direction){
 		clearInterval(this.drawTimerId);
+		clearInterval(this.refreshTimerId);
 	
 		if (direction == scrollDirection['NEXT']){
 			currentCanvas = this.otherCanvases[this.idx + 1];
@@ -411,7 +414,7 @@ var refreshTags = function(){
     console.log(currentCanvas.tagWords);
     //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
     //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
-    setTimeout(refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
+    //setTimeout(refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
 }
 
 var drawTags = function(){

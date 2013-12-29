@@ -130,6 +130,10 @@ var linkEvent = function(e){
 	{
 		scroll(e, scrollDirection['PREVIOUS']);
 	}
+	if (target.id === "refresh")
+	{
+		currentCanvas.drawingStart();
+	}
 }
 
 
@@ -245,7 +249,8 @@ var createTag = function(idx, keyword, frequency, maxFrequency, tagList){
 	
 	obj.color = colorTable[idx % colorTable.length]; //colorTable[Math.floor(Math.random() * 5)];
 	
-	
+	obj.tagDetailSrc = "newspaper" /* + newspaperIdx */ + "_tagDetail_" + idx + ".json"; //newpaper_tagDetail_0.json
+
 	// 태그들이 매 프레임마다 하는 일은
 	// 일단 다른 태그들과 겹치는지 체크해서 겹치면 서로 반대방향으로 속도 증가 시킴(거리에 비례해서)
 	// 그 다음은 지금 설정된 속도대로 움직임 - 좌표 변경
@@ -315,6 +320,48 @@ var createTag = function(idx, keyword, frequency, maxFrequency, tagList){
 		//console.log("move end");
 	}
 	
+	obj.openPopup = function(){
+		//test this function's scoop
+		console.log(this.keyword);
+		
+		var receivedDetail = null;
+	    var detailRequest = new XMLHttpRequest();
+	    detailRequest.open("GET", this.tagDetailSrc, false);
+		detailRequest.send(null);
+		
+		//받은 데이터를 리스트 형태로 변환해서 저장 
+	    receivedDetail = JSON.parse(detailRequest.responseText);
+		
+		var detailArea = document.getElementById("tagDetail");
+	    var detailContent = "";
+	    
+	    //contents
+	    detailContent += "<ul>"
+	    
+	    
+	    for (var i = 0, count = receivedDetail.length; i < count; ++i){
+		    detailContent += "<li>";
+		    detailContent += ("<a href=" + receivedDetail[i].link + ">" + receivedDetail[i].title + "</a>");
+		    detailContent += ("<p>" + receivedDetail[i].summary + "</p>");
+		    detailContent += "</li>";
+		    
+	    }
+	    
+	    detailContent += "</ul>";
+	    
+	    detailArea.innerHTML = detailContent;
+	    
+	    var detailBox = document.querySelector("#tagDetail > ul");
+	    
+	    var yPos = window.event.pageY;
+	    if (yPos > 200){
+		    yPos = 200;
+	    }
+	    
+	    detailBox.style.left = window.event.pageX + "px";
+	    detailBox.style.top = yPos + "px";
+	}
+	
 	return obj;
 }
 
@@ -335,6 +382,7 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
     oCanvas.drawing = null;
     oCanvas.drawContext = null;
     oCanvas.drawTimerId = null;
+    oCanvas.refreshTimerId = null;
     	
     //자신의 대상 캔버스를 찾아서 등록
     oCanvas.init = function(){
@@ -342,13 +390,14 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
 
 	    if (this.drawing.getContext){
 	    	this.drawContext = this.drawing.getContext("2d");
-	    	console.log(this.drawContext);
+	    	//console.log(this.drawContext);
 	    }
 	}
     	
     oCanvas.drawingStart = function(){
-    	console.log(this.drawContext);
+    	//console.log(this.drawContext);
     	//태그 정보를 업데이트하고
+    	//this.refreshTimerId = setInterval(refreshTags, refreshTime);
     	refreshTags();
     	
 		//주기적으로 현재의 tag data를 기반으로 화면에 그린다.
@@ -376,6 +425,7 @@ var createCanvas = function(canvasIdx, jsonPath, canvasList){
 	}
 	*/
 	oCanvas.change = function(direction){
+		clearInterval(this.refreshTimerId);
 		clearInterval(this.drawTimerId);
 	
 		if (direction == scrollDirection['NEXT']){
@@ -421,20 +471,20 @@ var refreshTags = function(){
 	for (var i = 0, count = receivedTagWords.length; i < count; ++i){
 		if (typeof buttonList[i] != 'undefined'){
 			//기존 등록 이벤트 삭제
-			buttonList[i].removeEventListener('mouseover', openPopup, false);
+			buttonList[i].removeEventListener('mouseover', currentCanvas.tagWords[i].openPopup, false);
 			buttonList[i].removeEventListener('mouseout', closePopup, false);
 		}
 		buttonList[i].style.width = (currentCanvas.tagWords[i].radius * 2) + "px";
 		buttonList[i].style.height = currentCanvas.tagWords[i].textSize + "px";
 		
-		buttonList[i].addEventListener('mouseover', openPopup, false);
+		buttonList[i].addEventListener('mouseover', currentCanvas.tagWords[i].openPopup.bind(currentCanvas.tagWords[i]), false);
 		buttonList[i].addEventListener('mouseout', closePopup, false);
 	}
     
-    console.log(currentCanvas.tagWords);
+    //console.log(currentCanvas.tagWords);
     //맨처음에 한 번 태그 정보를 업데이트한 뒤에는 setInterval()로 주기적으로 업데이트
     //(시간 간격 동안 기다렸다가 자기 자신을 하나 더 호출하고 자신은 종료)
-    setTimeout(refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
+    //setTimeout(refreshTags, refreshTime); //5분마다 태그 데이터 업데이트
 }
 
 var drawTags = function(){
@@ -459,40 +509,14 @@ var drawTags = function(){
 	//setTimeout(drawTags, moveFrameInterval);
 }
 
-var tempElement = document.getElementById("search_box");
-
-tempElement.addEventListener('mouseover', openPopup, false);
-tempElement.addEventListener('mouseout', closePopup, false);
-
-function openPopup(){
-	//fill this area
-	var detailArea = document.getElementById("tagDetail");
-    var detailContent = "";
-    
-    //contents
-    detailContent += "<div></div>";
-    
-    detailArea.innerHTML = detailContent;
-    
-    var detailBox = document.querySelector("#tagDetail > div");
-    
-    var yPos = window.event.pageY;
-    if (yPos > 200){
-	    yPos = 200;
-    }
-    
-    detailBox.style.left = window.event.pageX + "px";
-    detailBox.style.top = yPos + "px";
-}
-
 function closePopup(){
 	//fill this area
-	setTimeout(function(){
+	//setTimeout(function(){
 		var detailArea = document.getElementById("tagDetail");
 		var detailContent = "";
 		
 		detailArea.innerHTML = detailContent;
-	}, 300);
+	//}, 300);
 }
 
 /*

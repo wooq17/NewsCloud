@@ -1,0 +1,17 @@
+[
+	{
+		"title" : "[HCJ 기말평가] 본인 순서 확인하세요.",
+		"summary" : "11월30일 오후 3시부터 시작되는 순서 입니다. 랜덤으로 돌리려다.. 중간고사와 반대의 순서로 진행하기로 했습니다. 본인의 시간대 10분전에 4-11앞에서 대기하세요.",
+		"link" : "http://cafe.nhnnext.org/HTML_orange/notice/104756"
+	},
+	{
+		"title" : "단 한 번뿐인 소중한(?) 보강.",
+		"summary" : "Q&A 식으로 다양한 이야기를 할 계획입니다. 배우지 않은 부분, 당근 포함할 수 있고요. - css position을 아직 이해 못했어요 - ajax는 왜 배우는 건가요....?",
+		"link" : "http://cafe.nhnnext.org/HTML_orange/notice/102937"
+	},
+	{
+		"title" : "12월9일 수전전에 MAC에 웹서버가 동작되는지 확인하고 오세요.",
+		"summary" : "mac에 기본적인 웹서버가 이미 설치되어 있을거에요. (본인이 별도로 설치 한 사람도 있겠지만) 터미널창에서 sudo apachectl start 라고 치면 Apache웹서버가 시작됩니다.",
+		"link" : "http://cafe.nhnnext.org/HTML_orange/notice/100953"
+	}
+]
